@@ -25,11 +25,9 @@ let idCounter = 1;
 // Determine if the argument is a specific HTML file or a component name
 let pattern;
 if (target.endsWith('.html')) {
-    // Only process this HTML file
-    pattern = target;
+    pattern = target; // Only this file
 } else {
-    // Process all HTML files in folder recursively
-    pattern = "**/*.html";
+    pattern = "**/*.html"; // All HTML files
 }
 
 glob(pattern, { ignore: "node_modules/**" }, (err, files) => {
@@ -49,11 +47,17 @@ glob(pattern, { ignore: "node_modules/**" }, (err, files) => {
 
         $('button').each((_, button) => {
             const $btn = $(button);
-            // Skip if id already exists
             if (!$btn.attr('id')) {
-                const functionality = $btn.attr('name') || $btn.text().trim().replace(/\s+/g, '-').toLowerCase();
+                let functionality = $btn.attr('name') || $btn.text().trim();
+
+                functionality = functionality
+                    .replace(/{{.*?}}/g, '') 
+                    .replace(/[^a-zA-Z0-9]+/g, '-')
+                    .replace(/^-+|-+$/g, '')
+                    .toLowerCase();
+
                 const prefix = target.endsWith('.html') ? path.basename(file, '.html') : target;
-                const uniqueId = `${prefix}-${functionality}-${idCounter++}`;
+                const uniqueId = `${prefix}-${functionality || 'btn'}-${idCounter++}`;
                 $btn.attr('id', uniqueId);
             }
         });
