@@ -15,17 +15,32 @@ const cheerio = require('cheerio');
 
 const args = process.argv.slice(2);
 if (!args[0]) {
-    console.error("Please provide a component name: npm auto-id <component-name>");
+    console.error("Please provide a component name or HTML file: auto-id <component-name|file.html>");
     process.exit(1);
 }
 
-const componentName = args[0];
+const target = args[0];
 let idCounter = 1;
 
-glob("**/*.html", { ignore: "node_modules/**" }, (err, files) => {
+// Determine if the argument is a specific HTML file or a component name
+let pattern;
+if (target.endsWith('.html')) {
+    // Only process this HTML file
+    pattern = target;
+} else {
+    // Process all HTML files in folder recursively
+    pattern = "**/*.html";
+}
+
+glob(pattern, { ignore: "node_modules/**" }, (err, files) => {
     if (err) {
         console.error(err);
         process.exit(1);
+    }
+
+    if (files.length === 0) {
+        console.log("No HTML files found!");
+        return;
     }
 
     files.forEach(file => {
@@ -37,7 +52,8 @@ glob("**/*.html", { ignore: "node_modules/**" }, (err, files) => {
             // Skip if id already exists
             if (!$btn.attr('id')) {
                 const functionality = $btn.attr('name') || $btn.text().trim().replace(/\s+/g, '-').toLowerCase();
-                const uniqueId = `${componentName}-${functionality}-${idCounter++}`;
+                const prefix = target.endsWith('.html') ? path.basename(file, '.html') : target;
+                const uniqueId = `${prefix}-${functionality}-${idCounter++}`;
                 $btn.attr('id', uniqueId);
             }
         });
@@ -46,5 +62,5 @@ glob("**/*.html", { ignore: "node_modules/**" }, (err, files) => {
         console.log(`Updated: ${file}`);
     });
 
-    console.log("✅ All buttons updated with unique IDs.");
+    console.log("✅ Buttons updated with unique IDs.");
 });
